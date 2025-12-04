@@ -1,0 +1,313 @@
+-- ROBLOX Wan 脚本
+-- 作者: Wan
+-- 版本: 1.0
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
+
+-- 权限检查
+if LocalPlayer.Name == "AQ14ABS" or LocalPlayer.Name == "edc12363" or LocalPlayer.Name == "onygfvjop" or LocalPlayer.Name == "ah_kdj3" or LocalPlayer.Name == "luoyang100616" or LocalPlayer.Name == "hdjdje675" or LocalPlayer.Name == "qazwsxuruu" or LocalPlayer.Name == "ADCZ4xx" or LocalPlayer.Name == "hjcjb96" or LocalPlayer.Name == "TM5418888" or LocalPlayer.Name == "codm656558" then
+    LocalPlayer:Kick("Exploiting")
+else
+    -- 加载 OrionLib
+    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/jensonhirst/orion/main/source"))()
+    
+    -- 显示启动通知
+    OrionLib:MakeNotification({
+        Name = "Wan通知",
+        Content = "启动中",
+        Time = 2.5
+    })
+    
+    -- 播放启动音效
+    local Sound = Instance.new("Sound")
+    Sound.SoundId = "rbxassetid://4590662766"
+    Sound.Parent = SoundService
+    Sound.Volume = 5
+    Sound:Play()
+    Sound.Ended:Wait()
+    Sound:Destroy()
+    
+    -- 创建主窗口
+    local Window = OrionLib:MakeWindow({
+        Name = "Wan",
+        HidePremium = false,
+        SaveConfig = false,
+        IntroText = "Wan",
+        ConfigFolder = "Wan"
+    })
+    
+    -- 标签页1 信息
+    local Tab1 = Window:MakeTab({
+        Name = "信息",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+    
+    Tab1:AddLabel("你的名称")
+    Tab1:AddLabel(LocalPlayer.Name)
+    Tab1:AddLabel("初审人员")
+    Tab1:AddLabel("FengYu")
+    Tab1:AddLabel("DREAD849")
+    Tab1:AddLabel("QQ 123")
+    Tab1:AddLabel("如果你是最先使用人员，请记住这段以后会加的卡密系统 Wan 0 2 4 5 9 4")
+    
+    -- 标签页2 全局通用
+    local Tab2 = Window:MakeTab({
+        Name = "全局通用",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+    
+    -- Fly功能变量
+    local flyEnabled = false
+    local flySpeed = 50
+    local bodyVelocity = nil
+    local bodyGyro = nil
+    
+    -- Fly开关
+    Tab2:AddToggle({
+        Name = "Fly",
+        Default = false,
+        Callback = function(Value)
+            flyEnabled = Value
+            local Character = LocalPlayer.Character
+            if Character then
+                local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+                if HumanoidRootPart then
+                    if flyEnabled then
+                        bodyVelocity = Instance.new("BodyVelocity")
+                        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+                        bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+                        bodyVelocity.Parent = HumanoidRootPart
+                        
+                        bodyGyro = Instance.new("BodyGyro")
+                        bodyGyro.CFrame = HumanoidRootPart.CFrame
+                        bodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+                        bodyGyro.Parent = HumanoidRootPart
+                    else
+                        if bodyVelocity then
+                            bodyVelocity:Destroy()
+                            bodyVelocity = nil
+                        end
+                        if bodyGyro then
+                            bodyGyro:Destroy()
+                            bodyGyro = nil
+                        end
+                    end
+                end
+            end
+        end
+    })
+    
+    -- Fly速度滑块
+    Tab2:AddSlider({
+        Name = "Fly速度",
+        Min = 0,
+        Max = 99999,
+        Default = 50,
+        Color = Color3.fromRGB(0, 255, 127),
+        Increment = 1,
+        Callback = function(Value)
+            flySpeed = Value
+        end
+    })
+    
+    -- 飞车功能变量
+    local vehicleFlyEnabled = false
+    local vehicleFlySpeed = 100
+    
+    -- 飞车开关
+    Tab2:AddToggle({
+        Name = "飞车",
+        Default = false,
+        Callback = function(Value)
+            vehicleFlyEnabled = Value
+        end
+    })
+    
+    -- 飞车速度输入框
+    Tab2:AddTextbox({
+        Name = "飞车速度",
+        Default = "100",
+        Placeholder = "输入速度",
+        Callback = function(Value)
+            vehicleFlySpeed = tonumber(Value) or 100
+        end
+    })
+    
+    -- 透视功能
+    local highlights = {}
+    local highlightToggles = {}
+    
+    local highlightOptions = {
+        {"彩色描边", Color3.new(1, 1, 1)},
+        {"紫色描边", Color3.fromRGB(128, 0, 128)},
+        {"绿色描边", Color3.fromRGB(0, 255, 0)},
+        {"红色描边", Color3.fromRGB(255, 0, 0)}
+    }
+    
+    for _, option in ipairs(highlightOptions) do
+        highlightToggles[option[1]] = false
+        
+        Tab2:AddToggle({
+            Name = option[1],
+            Default = false,
+            Callback = function(Value)
+                highlightToggles[option[1]] = Value
+                updateHighlights()
+            end
+        })
+    end
+    
+    local function updateHighlights()
+        -- 清除现有高亮
+        for _, highlight in pairs(highlights) do
+            if highlight and highlight.Parent then
+                highlight:Destroy()
+            end
+        end
+        highlights = {}
+        
+        -- 为每个玩家创建高亮
+        for _, Player in ipairs(Players:GetPlayers()) do
+            if Player ~= LocalPlayer and Player.Character then
+                local Character = Player.Character
+                local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
+                if HumanoidRootPart then
+                    local highlight = Instance.new("Highlight")
+                    highlight.FillTransparency = 1
+                    
+                    -- 确定颜色
+                    local color = Color3.new(1, 1, 1)
+                    if highlightToggles["紫色描边"] then
+                        color = Color3.fromRGB(128, 0, 128)
+                    elseif highlightToggles["绿色描边"] then
+                        color = Color3.fromRGB(0, 255, 0)
+                    elseif highlightToggles["红色描边"] then
+                        color = Color3.fromRGB(255, 0, 0)
+                    end
+                    
+                    highlight.OutlineColor = color
+                    highlight.Parent = Character
+                    table.insert(highlights, highlight)
+                end
+            end
+        end
+    end
+    
+    -- 无限体力功能
+    Tab2:AddToggle({
+        Name = "无限体力",
+        Default = false,
+        Callback = function(Value)
+            if Value then
+                local Character = LocalPlayer.Character
+                if Character then
+                    local Stamina = Character:FindFirstChild("体力")
+                    if Stamina then
+                        Stamina.Value = 99999999
+                    else
+                        local NewStamina = Instance.new("IntValue")
+                        NewStamina.Name = "体力"
+                        NewStamina.Value = 99999999
+                        NewStamina.Parent = Character
+                    end
+                end
+            end
+        end
+    })
+    
+    -- 标签页3 音乐播放器
+    local Tab3 = Window:MakeTab({
+        Name = "音乐播放器",
+        Icon = "rbxassetid://4483345998",
+        PremiumOnly = false
+    })
+    
+    local CurrentSound = nil
+    local MusicId = ""
+    
+    -- 音乐ID输入框
+    Tab3:AddTextbox({
+        Name = "音乐ID",
+        Default = "",
+        Placeholder = "输入音乐ID",
+        Callback = function(Value)
+            MusicId = Value
+        end
+    })
+    
+    -- 播放按钮
+    Tab3:AddButton({
+        Name = "播放音乐",
+        Callback = function()
+            if CurrentSound then
+                CurrentSound:Stop()
+                CurrentSound:Destroy()
+            end
+            
+            if MusicId ~= "" then
+                CurrentSound = Instance.new("Sound")
+                CurrentSound.SoundId = "rbxassetid://" .. MusicId
+                CurrentSound.Volume = 1
+                CurrentSound.Parent = SoundService
+                CurrentSound:Play()
+            end
+        end
+    })
+    
+    -- 停止按钮
+    Tab3:AddButton({
+        Name = "停止",
+        Callback = function()
+            if CurrentSound then
+                CurrentSound:Stop()
+                CurrentSound:Destroy()
+                CurrentSound = nil
+            end
+        end
+    })
+    
+    -- 飞行控制循环
+    RunService.Heartbeat:Connect(function()
+        if flyEnabled and LocalPlayer.Character then
+            local HumanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if HumanoidRootPart and bodyVelocity and bodyGyro then
+                local Camera = workspace.CurrentCamera
+                local Direction = Vector3.new()
+                
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    Direction = Direction + Camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    Direction = Direction - Camera.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    Direction = Direction - Camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    Direction = Direction + Camera.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+                    Direction = Direction + Vector3.new(0, 1, 0)
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then
+                    Direction = Direction - Vector3.new(0, 1, 0)
+                end
+                
+                if Direction.Magnitude > 0 then
+                    Direction = Direction.Unit * flySpeed
+                end
+                
+                bodyVelocity.Velocity = Direction
+                bodyGyro.CFrame = Camera.CFrame
+            end
+        end
+    end)
+    
+    print("Wan 脚本加载完成")
+end
