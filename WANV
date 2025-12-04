@@ -1,4 +1,4 @@
--- ROBLOX Wan 脚本
+-- ROBLOX Wan 脚本 (使用 Rayfield UI)
 -- 作者: Wan
 -- 版本: 1.0
 
@@ -7,19 +7,20 @@ local LocalPlayer = Players.LocalPlayer
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local HttpService = game:GetService("HttpService")
+
+-- 加载 Rayfield UI 库
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/12dafs/Rayfield/main/source.lua'))()
 
 -- 权限检查
 if LocalPlayer.Name == "AQ14ABS" or LocalPlayer.Name == "edc12363" or LocalPlayer.Name == "onygfvjop" or LocalPlayer.Name == "ah_kdj3" or LocalPlayer.Name == "luoyang100616" or LocalPlayer.Name == "hdjdje675" or LocalPlayer.Name == "qazwsxuruu" or LocalPlayer.Name == "ADCZ4xx" or LocalPlayer.Name == "hjcjb96" or LocalPlayer.Name == "TM5418888" or LocalPlayer.Name == "codm656558" then
     LocalPlayer:Kick("Exploiting")
 else
-    -- 加载 OrionLib
-    local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/jensonhirst/orion/main/source"))()
-    
     -- 显示启动通知
-    OrionLib:MakeNotification({
-        Name = "Wan通知",
+    Rayfield:Notify({
+        Title = "Wan通知",
         Content = "启动中",
-        Time = 2.5
+        Duration = 2.5
     })
     
     -- 播放启动音效
@@ -32,35 +33,32 @@ else
     Sound:Destroy()
     
     -- 创建主窗口
-    local Window = OrionLib:MakeWindow({
+    local Window = Rayfield:CreateWindow({
         Name = "Wan",
-        HidePremium = false,
-        SaveConfig = false,
-        IntroText = "Wan",
-        ConfigFolder = "Wan"
+        LoadingTitle = "Wan",
+        LoadingSubtitle = "加载中",
+        ConfigurationSaving = {
+            Enabled = false
+        },
+        Discord = {
+            Enabled = false
+        },
+        KeySystem = false
     })
     
     -- 标签页1 信息
-    local Tab1 = Window:MakeTab({
-        Name = "信息",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
+    local Tab1 = Window:CreateTab("信息", 4483345998)
     
-    Tab1:AddLabel("你的名称")
-    Tab1:AddLabel(LocalPlayer.Name)
-    Tab1:AddLabel("初审人员")
-    Tab1:AddLabel("FengYu")
-    Tab1:AddLabel("DREAD849")
-    Tab1:AddLabel("QQ 123")
-    Tab1:AddLabel("如果你是最先使用人员，请记住这段以后会加的卡密系统 Wan 0 2 4 5 9 4")
+    Tab1:CreateLabel("你的名称")
+    Tab1:CreateLabel(LocalPlayer.Name, true)
+    Tab1:CreateLabel("初审人员")
+    Tab1:CreateLabel("FengYu", true)
+    Tab1:CreateLabel("DREAD849", true)
+    Tab1:CreateLabel("QQ 123", true)
+    Tab1:CreateLabel("如果你是最先使用人员，请记住这段以后会加的卡密系统 Wan 0 2 4 5 9 4", true)
     
     -- 标签页2 全局通用
-    local Tab2 = Window:MakeTab({
-        Name = "全局通用",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
+    local Tab2 = Window:CreateTab("全局通用", 4483345998)
     
     -- Fly功能变量
     local flyEnabled = false
@@ -69,9 +67,10 @@ else
     local bodyGyro = nil
     
     -- Fly开关
-    Tab2:AddToggle({
+    Tab2:CreateToggle({
         Name = "Fly",
-        Default = false,
+        CurrentValue = false,
+        Flag = "FlyToggle",
         Callback = function(Value)
             flyEnabled = Value
             local Character = LocalPlayer.Character
@@ -104,13 +103,13 @@ else
     })
     
     -- Fly速度滑块
-    Tab2:AddSlider({
+    Tab2:CreateSlider({
         Name = "Fly速度",
-        Min = 0,
-        Max = 99999,
-        Default = 50,
-        Color = Color3.fromRGB(0, 255, 127),
+        Range = {0, 99999},
         Increment = 1,
+        Suffix = "",
+        CurrentValue = 50,
+        Flag = "FlySpeedSlider",
         Callback = function(Value)
             flySpeed = Value
         end
@@ -121,48 +120,36 @@ else
     local vehicleFlySpeed = 100
     
     -- 飞车开关
-    Tab2:AddToggle({
+    Tab2:CreateToggle({
         Name = "飞车",
-        Default = false,
+        CurrentValue = false,
+        Flag = "VehicleFlyToggle",
         Callback = function(Value)
             vehicleFlyEnabled = Value
         end
     })
     
     -- 飞车速度输入框
-    Tab2:AddTextbox({
+    Tab2:CreateInput({
         Name = "飞车速度",
-        Default = "100",
-        Placeholder = "输入速度",
+        PlaceholderText = "输入速度",
+        RemoveTextAfterFocusLost = false,
+        Flag = "VehicleFlySpeedInput",
         Callback = function(Value)
             vehicleFlySpeed = tonumber(Value) or 100
         end
     })
     
-    -- 透视功能
+    -- 透视功能变量
     local highlights = {}
-    local highlightToggles = {}
-    
-    local highlightOptions = {
-        {"彩色描边", Color3.new(1, 1, 1)},
-        {"紫色描边", Color3.fromRGB(128, 0, 128)},
-        {"绿色描边", Color3.fromRGB(0, 255, 0)},
-        {"红色描边", Color3.fromRGB(255, 0, 0)}
+    local highlightStates = {
+        ["彩色描边"] = false,
+        ["紫色描边"] = false,
+        ["绿色描边"] = false,
+        ["红色描边"] = false
     }
     
-    for _, option in ipairs(highlightOptions) do
-        highlightToggles[option[1]] = false
-        
-        Tab2:AddToggle({
-            Name = option[1],
-            Default = false,
-            Callback = function(Value)
-                highlightToggles[option[1]] = Value
-                updateHighlights()
-            end
-        })
-    end
-    
+    -- 更新高亮显示
     local function updateHighlights()
         -- 清除现有高亮
         for _, highlight in pairs(highlights) do
@@ -172,6 +159,16 @@ else
         end
         highlights = {}
         
+        -- 确定当前选择的颜色
+        local selectedColor = Color3.new(1, 1, 1) -- 默认白色
+        if highlightStates["紫色描边"] then
+            selectedColor = Color3.fromRGB(128, 0, 128)
+        elseif highlightStates["绿色描边"] then
+            selectedColor = Color3.fromRGB(0, 255, 0)
+        elseif highlightStates["红色描边"] then
+            selectedColor = Color3.fromRGB(255, 0, 0)
+        end
+        
         -- 为每个玩家创建高亮
         for _, Player in ipairs(Players:GetPlayers()) do
             if Player ~= LocalPlayer and Player.Character then
@@ -180,18 +177,7 @@ else
                 if HumanoidRootPart then
                     local highlight = Instance.new("Highlight")
                     highlight.FillTransparency = 1
-                    
-                    -- 确定颜色
-                    local color = Color3.new(1, 1, 1)
-                    if highlightToggles["紫色描边"] then
-                        color = Color3.fromRGB(128, 0, 128)
-                    elseif highlightToggles["绿色描边"] then
-                        color = Color3.fromRGB(0, 255, 0)
-                    elseif highlightToggles["红色描边"] then
-                        color = Color3.fromRGB(255, 0, 0)
-                    end
-                    
-                    highlight.OutlineColor = color
+                    highlight.OutlineColor = selectedColor
                     highlight.Parent = Character
                     table.insert(highlights, highlight)
                 end
@@ -199,10 +185,76 @@ else
         end
     end
     
+    -- 彩色描边开关
+    Tab2:CreateToggle({
+        Name = "彩色描边",
+        CurrentValue = false,
+        Flag = "ColorOutlineToggle",
+        Callback = function(Value)
+            highlightStates["彩色描边"] = Value
+            if Value then
+                -- 关闭其他选项
+                highlightStates["紫色描边"] = false
+                highlightStates["绿色描边"] = false
+                highlightStates["红色描边"] = false
+            end
+            updateHighlights()
+        end
+    })
+    
+    -- 紫色描边开关
+    Tab2:CreateToggle({
+        Name = "紫色描边",
+        CurrentValue = false,
+        Flag = "PurpleOutlineToggle",
+        Callback = function(Value)
+            highlightStates["紫色描边"] = Value
+            if Value then
+                highlightStates["彩色描边"] = false
+                highlightStates["绿色描边"] = false
+                highlightStates["红色描边"] = false
+            end
+            updateHighlights()
+        end
+    })
+    
+    -- 绿色描边开关
+    Tab2:CreateToggle({
+        Name = "绿色描边",
+        CurrentValue = false,
+        Flag = "GreenOutlineToggle",
+        Callback = function(Value)
+            highlightStates["绿色描边"] = Value
+            if Value then
+                highlightStates["彩色描边"] = false
+                highlightStates["紫色描边"] = false
+                highlightStates["红色描边"] = false
+            end
+            updateHighlights()
+        end
+    })
+    
+    -- 红色描边开关
+    Tab2:CreateToggle({
+        Name = "红色描边",
+        CurrentValue = false,
+        Flag = "RedOutlineToggle",
+        Callback = function(Value)
+            highlightStates["红色描边"] = Value
+            if Value then
+                highlightStates["彩色描边"] = false
+                highlightStates["紫色描边"] = false
+                highlightStates["绿色描边"] = false
+            end
+            updateHighlights()
+        end
+    })
+    
     -- 无限体力功能
-    Tab2:AddToggle({
+    Tab2:CreateToggle({
         Name = "无限体力",
-        Default = false,
+        CurrentValue = false,
+        Flag = "InfiniteStaminaToggle",
         Callback = function(Value)
             if Value then
                 local Character = LocalPlayer.Character
@@ -222,27 +274,24 @@ else
     })
     
     -- 标签页3 音乐播放器
-    local Tab3 = Window:MakeTab({
-        Name = "音乐播放器",
-        Icon = "rbxassetid://4483345998",
-        PremiumOnly = false
-    })
+    local Tab3 = Window:CreateTab("音乐播放器", 4483345998)
     
     local CurrentSound = nil
     local MusicId = ""
     
     -- 音乐ID输入框
-    Tab3:AddTextbox({
+    Tab3:CreateInput({
         Name = "音乐ID",
-        Default = "",
-        Placeholder = "输入音乐ID",
+        PlaceholderText = "输入音乐ID",
+        RemoveTextAfterFocusLost = false,
+        Flag = "MusicIdInput",
         Callback = function(Value)
             MusicId = Value
         end
     })
     
     -- 播放按钮
-    Tab3:AddButton({
+    Tab3:CreateButton({
         Name = "播放音乐",
         Callback = function()
             if CurrentSound then
@@ -261,7 +310,7 @@ else
     })
     
     -- 停止按钮
-    Tab3:AddButton({
+    Tab3:CreateButton({
         Name = "停止",
         Callback = function()
             if CurrentSound then
